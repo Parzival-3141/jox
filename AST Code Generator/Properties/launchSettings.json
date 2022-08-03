@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AST Code Generator": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Users\\pocke\\projects\\Languages\\Jox\\jox\\Parsing\\AST\\"
+    }
+  }
+}
