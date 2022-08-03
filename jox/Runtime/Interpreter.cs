@@ -1,17 +1,20 @@
 ﻿using Jox.Parsing;
 using Jox.Parsing.AST;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Jox.Runtime
 {
-    public sealed class Interpreter : IExpr.IVisitor<object>
+    public sealed class Interpreter : IExpr.IVisitor<object>, IStmt.IVisitor<Void>
     {
-        public void Interpret(IExpr expression)
+        private Environment environment = new Environment();
+
+        public void Interpret(List<IStmt> statements)
         {
             try
             {
-                object value = Evaluate(expression);
-                System.Console.WriteLine(Stringify(value));
+                foreach (var stmt in statements)
+                    Execute(stmt);
             }
             catch(RuntimeError error)
             {
@@ -34,7 +37,7 @@ namespace Jox.Runtime
             return obj.ToString();
         }
         
-        #region Visitor Implementation
+        #region IExpr Implementation
 
         public object VisitBinaryExpr(IExpr.Binary expr)
         {
@@ -89,6 +92,13 @@ namespace Jox.Runtime
             }
         }
 
+        public object VisitAssignExpr(IExpr.Assign expr)
+        {
+            object value = Evaluate(expr.value);
+            environment.AssignVariableValue(expr.ident, value);
+            return value;
+        }
+
         public object VisitUnaryExpr(IExpr.Unary expr)
         {
             object right = Evaluate(expr.right);
@@ -105,6 +115,11 @@ namespace Jox.Runtime
                 default: 
                     return null;
             }
+        }
+
+        public object VisitVariableExpr(IExpr.Variable expr)
+        {
+            return environment.GetVariableValue(expr.ident);
         }
 
         public object VisitGroupingExpr(IExpr.Grouping expr)
@@ -142,5 +157,35 @@ namespace Jox.Runtime
         }
 
         #endregion
+
+        public Void VisitExpressionStmt(IStmt.Expression stmt)
+        {
+            _ = Evaluate(stmt.expression); 
+            return null;
+        }
+
+        public Void VisitPrintStmt(IStmt.Print stmt)
+        {
+            object value = Evaluate(stmt.expression);
+            System.Console.WriteLine(Stringify(value));
+            return null;
+        }
+
+        public Void VisitVarStmt(IStmt.Var stmt)
+        {
+            object value = null;
+            if(stmt.initializer != null)
+            {
+                value = Evaluate(stmt.initializer);
+            }
+
+            environment.DefineVariable(stmt.ident.lexeme, value);
+            return null;
+        }
+
+        private void Execute(IStmt stmt)
+        {
+            stmt.Accept(this);
+        }
     }
 }

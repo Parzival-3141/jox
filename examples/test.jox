@@ -1,0 +1,15 @@
+print "one";
+print true;
+print 1 + 2;
+
+var a = "Hello "; 
+var b = "World"; 
+print a + b;
+
+print "";
+
+var c = a;
+b = "Sailor!";
+print c + b;
+
+// print 10 + b; // error!

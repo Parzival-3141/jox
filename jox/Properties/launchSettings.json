@@ -1,8 +1,7 @@
 {
   "profiles": {
     "jox": {
-      "commandName": "Project",
-      "commandLineArgs": "-debug"
+      "commandName": "Project"
     }
   }
 }

@@ -6,37 +6,82 @@ namespace Jox.Parsing
 {
     public static class Parser
     {
+        private static List<IStmt> statements = new List<IStmt>();
         private static List<Token> tokens;
         private static int currentIndex;
 
-        public static IExpr Parse(List<Token> tokens)
+        public static List<IStmt> Parse(List<Token> tokens)
         {
+            Parser.statements.Clear();
             Parser.tokens = tokens;
             currentIndex = 0;
 
+            while (!AtEof())
+            {
+                statements.Add(Declaration());
+            }
+
+            return statements;
+        }
+
+        private static IStmt Declaration()
+        {
             try
             {
-                //  @Refactor: Will return after the first valid expression, 
-                //  ignoring everything afterwards, even if it should be a parsing error.
-                return Expression(); 
+                if (Match(TokenType.VAR)) return VarDeclaration();
+
+                return Statement();
             }
-            catch (ParseError)
+            catch
             {
+                SynchronizeState();
                 return null;
             }
+        }
 
+        private static IStmt VarDeclaration()
+        {
+            Token name = EatExpectedToken(TokenType.IDENTIFIER, "Expected variable name.");
 
+            IExpr initializer = null;
+            if (Match(TokenType.EQUAL))
+            {
+                initializer = Expression();
+            }
+
+            EatExpectedToken(TokenType.SEMICOLON, "Expected ';' after variable declaration.");
+            return new IStmt.Var(name, initializer);
+        }
+
+        private static IStmt Statement()
+        {
+            if (Match(TokenType.PRINT)) return PrintStatement();
+            return ExpressionStatement();
+        }
+
+        private static IStmt ExpressionStatement()
+        {
+            IExpr expr = Expression();
+            EatExpectedToken(TokenType.SEMICOLON, "Expected ';' after expression.");
+            return new IStmt.Expression(expr);
+        }
+
+        private static IStmt PrintStatement()
+        {
+            IExpr value = Expression();
+            EatExpectedToken(TokenType.SEMICOLON, "Expected ';' after value.");
+            return new IStmt.Print(value);
         }
 
         #region Helper Methods
 
         private static bool Match(params TokenType[] types)
         {
-            foreach(TokenType t in types)
+            foreach (TokenType t in types)
             {
                 if (CheckPeek(t))
                 {
-                    EatToken();
+                    _ = EatToken();
                     return true;
                 }
             }
@@ -68,14 +113,37 @@ namespace Jox.Parsing
 
         private static bool AtEof()
         {
-            return currentIndex >= tokens.Count;
+            //return currentIndex >= tokens.Count - 1;
+            return Peek().type == TokenType.EOF;
         }
 
         #endregion
 
         #region Expressions
 
-        private static IExpr Expression() => Equality();
+        private static IExpr Expression() => Assignment();
+        
+        private static IExpr Assignment()
+        {
+            IExpr expr = Equality();
+
+
+            if (Match(TokenType.EQUAL))
+            {
+                Token equals = PreviousToken();
+                IExpr value  = Assignment();
+
+                if(expr is IExpr.Variable var)
+                {
+                    return new IExpr.Assign(var.ident, value);
+                }
+
+                Error(equals, "Invalid assignment target.");
+            }
+
+            return expr;
+        }
+
         private static IExpr Equality()
         {
             IExpr expr = Comparison();
@@ -132,40 +200,40 @@ namespace Jox.Parsing
             if (Match(TokenType.NIL))   return new IExpr.Literal(null);
 
             if (Match(TokenType.NUMBER, TokenType.STRING)) return new IExpr.Literal(PreviousToken().literal);
+            if (Match(TokenType.IDENTIFIER)) return new IExpr.Variable(PreviousToken());
 
             if (Match(TokenType.LEFT_PAREN))
             {
                 var expr = Expression();
-                Consume(TokenType.RIGHT_PAREN, "Expected ')' after expression");
+                EatExpectedToken(TokenType.RIGHT_PAREN, "Expected ')' after expression");
                 return new IExpr.Grouping(expr);
             }
 
             //  Error Productions for Binary operators missing a left-hand operand
             //  @Refactor: there's definitely a better way of doing this
 
-            if(Match(
-                TokenType.BANG_EQUAL, 
-                TokenType.EQUAL, TokenType.EQUAL_EQUAL, 
-                TokenType.GREATER, TokenType.GREATER_EQUAL, 
-                TokenType.LESS, TokenType.LESS_EQUAL, 
-                TokenType.MINUS, TokenType.PLUS, 
+            if (Match(
+                TokenType.BANG_EQUAL,
+                TokenType.EQUAL, TokenType.EQUAL_EQUAL,
+                TokenType.GREATER, TokenType.GREATER_EQUAL,
+                TokenType.LESS, TokenType.LESS_EQUAL,
+                TokenType.MINUS, TokenType.PLUS,
                 TokenType.SLASH, TokenType.STAR))
             {
                 Error(PreviousToken(), "Binary Operator is missing a left-hand operand");
                 return Expression();
             }
-                
 
             throw Error(Peek(), "Expected an Expression.");
         }
 
         #endregion
 
-        private static Token Consume(TokenType type, string message)
+        private static Token EatExpectedToken(TokenType type, string errorMessage)
         {
             if (CheckPeek(type)) return EatToken();
 
-            throw Error(Peek(), message);
+            throw Error(Peek(), errorMessage);
         }
 
         private static ParseError Error(Token token, string message)
@@ -176,9 +244,11 @@ namespace Jox.Parsing
 
         private static void SynchronizeState()
         {
+            _ = EatToken();
+
             while (!AtEof())
             {
-                if (EatToken().type == TokenType.SEMICOLON) return;
+                if (PreviousToken().type == TokenType.SEMICOLON) return;
 
                 switch (Peek().type)
                 {
@@ -192,6 +262,8 @@ namespace Jox.Parsing
                     case TokenType.RETURN:
                         return;
                 }
+
+                _ = EatToken();
             }
         }
     }

@@ -22,8 +22,7 @@ namespace Jox.Parsing
 
         public void Print(IExpr expr) => Console.WriteLine(expr.Accept(this));
 
-        private string Parenthesize(string name, IExpr expr) => Parenthesize(name, new IExpr[] { expr });
-        private string Parenthesize(string name, IExpr[] exprs)
+        private string Parenthesize(string name, params IExpr[] exprs)
         {
             string result = "(" + name;
             
@@ -38,8 +37,7 @@ namespace Jox.Parsing
 
         public string VisitBinaryExpr(IExpr.Binary expr)
         {
-            return Parenthesize(expr.@operator.lexeme, 
-                new IExpr[]{ expr.left, expr.right });
+            return Parenthesize(expr.@operator.lexeme, expr.left, expr.right);
         }
 
         public string VisitGroupingExpr(IExpr.Grouping expr)
@@ -56,6 +54,16 @@ namespace Jox.Parsing
         public string VisitUnaryExpr(IExpr.Unary expr)
         {
             return Parenthesize(expr.@operator.lexeme, expr.right);
+        }
+
+        public string VisitVariableExpr(IExpr.Variable expr)
+        {
+            return "var " + expr.ident.lexeme;
+        }
+
+        public string VisitAssignExpr(IExpr.Assign expr)
+        {
+            return Parenthesize("assign " + expr.ident.lexeme, expr.value);
         }
     }
 }

@@ -15,13 +15,32 @@ namespace Jox.Parsing.AST
     {
         public interface IVisitor<T>
         {
+            T VisitAssignExpr(Assign expr);
             T VisitBinaryExpr(Binary expr);
             T VisitGroupingExpr(Grouping expr);
             T VisitLiteralExpr(Literal expr);
             T VisitUnaryExpr(Unary expr);
+            T VisitVariableExpr(Variable expr);
         }
 
         T Accept<T>(IVisitor<T> visitor);
+
+        public struct Assign : IExpr
+        {
+            public Token ident;
+            public IExpr value;
+
+            public Assign(Token ident, IExpr value)
+            {
+                this.ident = ident;
+                this.value = value;
+            }
+
+            public T Accept<T>(IVisitor<T> visitor)
+            {
+                return visitor.VisitAssignExpr(this);
+            }
+        }
 
         public struct Binary : IExpr
         {
@@ -86,6 +105,21 @@ namespace Jox.Parsing.AST
             public T Accept<T>(IVisitor<T> visitor)
             {
                 return visitor.VisitUnaryExpr(this);
+            }
+        }
+
+        public struct Variable : IExpr
+        {
+            public Token ident;
+
+            public Variable(Token ident)
+            {
+                this.ident = ident;
+            }
+
+            public T Accept<T>(IVisitor<T> visitor)
+            {
+                return visitor.VisitVariableExpr(this);
             }
         }
 

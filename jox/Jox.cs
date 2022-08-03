@@ -34,7 +34,7 @@ namespace Jox
             if (args.Length > 2 || args.Contains("-h") || args.Contains("-help"))
             {
                 Console.WriteLine("Usage: jox <source-file> [-debug] [-h|-help]");
-                Environment.Exit(ERROR_INVALID_ARGS);
+                System.Environment.Exit(ERROR_INVALID_ARGS);
             }
 
             printAST = args.Contains("-debug");
@@ -48,29 +48,43 @@ namespace Jox
         private static void Run(string source)
         {
             var tokens = Parsing.Lexer.Lex(source);
-            var expression = Parsing.Parser.Parse(tokens);
+            var statements = Parsing.Parser.Parse(tokens);
 
             //foreach(var t in tokens)
             //    Console.WriteLine(t);
 
             if (hadParseError) return;
 
-            if(printAST) new Parsing.ASTPrinter().Print(expression);
+            if (printAST)
+            {
+                var printer = new Parsing.ASTPrinter();
+                foreach(dynamic stmt in statements)
+                {
+                    try
+                    {
+                        printer.Print(stmt.expression);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("PrinterError: Invalid IStmt (" + stmt + ")");
+                    }
+                }
+            }
             
-            interpreter.Interpret(expression);
+            interpreter.Interpret(statements);
         }
 
         private static void RunPrompt()
         {
-            Console.WriteLine("jox Interactive Prompt :)");
-            Console.WriteLine("Operators & Literals only");
+            Console.WriteLine("*WIP: Statements and Expressions only!*");
+            Console.WriteLine("jox Interactive Prompt \n(Type 'exit' to quit)");
             
             while(true)
             {
                 Console.Write("> ");
                 
                 var line = Console.ReadLine();
-                if (line == null) break;
+                if (line == null || line == "exit") break;
                 
                 Run(line);
                 hadParseError = false;
@@ -88,12 +102,12 @@ namespace Jox
             catch
             {
                 Console.WriteLine("Invalid source-file.");
-                Environment.Exit(ERROR_INVALID_SOURCE);
+                System.Environment.Exit(ERROR_INVALID_SOURCE);
             }
 
             Run(source);
-            if (hadParseError) Environment.Exit(ERROR_PARSE_FAILURE);
-            if (hadRuntimeError) Environment.Exit(ERROR_RUNTIME_FAILURE);
+            if (hadParseError) System.Environment.Exit(ERROR_PARSE_FAILURE);
+            if (hadRuntimeError) System.Environment.Exit(ERROR_RUNTIME_FAILURE);
         }
 
         //@Refactor: could abstract into an 'ErrorReporter' that gets passed around

@@ -23,4 +23,9 @@ namespace Jox
             return result;
         }
     }
+
+    public sealed class Void
+    {
+        Void() => throw new InvalidOperationException("You cannot create an instance of Void.");
+    }
 }

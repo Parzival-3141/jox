@@ -59,17 +59,20 @@ namespace AST_Code_Generator
         {
             ( "Expr", new string[]
                 {
+                    "Assign   : Token ident, Expr value",
                     "Binary   : Expr left, Token @operator, Expr right",
                     "Grouping : Expr expression",
                     "Literal  : Object value",
-                    "Unary    : Token @operator, Expr right"
+                    "Unary    : Token @operator, Expr right",
+                    "Variable : Token ident",
                 }
             ),
 
             ( "Stmt", new string[]
                 {
                     "Expression : Expr expression",
-                    "Print      : Expr expression"
+                    "Print      : Expr expression",
+                    "Var        : Token ident, Expr initializer",
                 }
             )
         };
