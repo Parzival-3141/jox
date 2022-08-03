@@ -55,6 +55,25 @@ namespace AST_Code_Generator
 // </auto-generated>
 //------------------------------------------------------------------------------";
 
+        static HashSet<(string baseName, string[] types)> ASTDefs = new()
+        {
+            ( "Expr", new string[]
+                {
+                    "Binary   : Expr left, Token @operator, Expr right",
+                    "Grouping : Expr expression",
+                    "Literal  : Object value",
+                    "Unary    : Token @operator, Expr right"
+                }
+            ),
+
+            ( "Stmt", new string[]
+                {
+                    "Expression : Expr expression",
+                    "Print      : Expr expression"
+                }
+            )
+        };
+
         static void Main(string[] args)
         {
             if (args.Length != 1)
@@ -63,20 +82,15 @@ namespace AST_Code_Generator
                 Environment.Exit(1);
             }
 
-            DefineAST(args[0], "Expr", new string[]
-            {
-                "Binary   : Expr left, Token @operator, Expr right",
-                "Grouping : Expr expression",
-                "Literal  : Object value",
-                "Unary    : Token @operator, Expr right"
-            });
+            foreach (var ast in ASTDefs)
+                DefineAST(args[0], ast);
 
             Console.WriteLine("Completed!");
         }
 
-        static void DefineAST(string outputDir, string baseName, string[] types)
+        static void DefineAST(string outputDir, (string baseName, string[] types) ast)
         {
-            string path = Path.Join(outputDir, "I" + baseName + ".cs");
+            string path = Path.Join(outputDir, "I" + ast.baseName + ".cs");
             Directory.CreateDirectory(outputDir);
 
             using StreamWriter sw = File.CreateText(path);
@@ -89,10 +103,10 @@ namespace AST_Code_Generator
             
             sw.WriteLine("namespace Jox.Parsing.AST");
             sw.WriteLine("{");
-            sw.WriteLine(TAB + "public interface I" + baseName);
+            sw.WriteLine(TAB + "public interface I" + ast.baseName);
             sw.WriteLine(TAB + "{");
 
-            DefineVisitor(sw, baseName, types);
+            DefineVisitor(sw, ast);
 
             //  Base Accept method
             sw.WriteLine();
@@ -100,13 +114,16 @@ namespace AST_Code_Generator
             sw.WriteLine();
 
 
-            //  Gen AST Classes
-            foreach (string t in types)
+            //  Gen AST Structs
+            foreach (string t in ast.types)
             {
                 string name = t.Split(":")[0].Trim();
-                string fields = t.Split(":")[1].Trim().Replace(baseName, "I"+baseName);
+                string fields = t.Split(":")[1].Trim();
 
-                DefineType(sw, baseName, name, fields);
+                foreach (var def in ASTDefs)
+                    fields = fields.Replace(def.baseName, "I" + def.baseName);
+
+                DefineType(sw, ast.baseName, name, fields);
                 sw.WriteLine();
             }
 
@@ -114,15 +131,15 @@ namespace AST_Code_Generator
             sw.WriteLine("}");
         }
 
-        private static void DefineVisitor(StreamWriter sw, string baseName, string[] types)
+        private static void DefineVisitor(StreamWriter sw, (string baseName, string[] types) ast)
         {
             sw.WriteLine(TAB2 + "public interface IVisitor<T>");
             sw.WriteLine(TAB2 + "{");
 
-            foreach(var t in types)
+            foreach(var t in ast.types)
             {
                 var tName = t.Split(":")[0].Trim();
-                sw.WriteLine(TAB3 + $"T Visit{tName}{baseName}({tName} {baseName.ToLower()});");
+                sw.WriteLine(TAB3 + $"T Visit{tName}{ast.baseName}({tName} {ast.baseName.ToLower()});");
             }
 
             sw.WriteLine(TAB2 + "}");
