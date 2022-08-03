@@ -143,7 +143,7 @@ namespace Jox.Parsing
                         HandleIdentifier();
                     
                     else
-                        Jox.Error(line, $"Unexpected character '{c}'");
+                        Jox.ParseError(line, $"Unexpected character '{c}'");
                     break;
             }
         }
@@ -164,7 +164,7 @@ namespace Jox.Parsing
 
             if (AtEof())
             {
-                Jox.Error(line, "Unterminated string.");
+                Jox.ParseError(line, "Unterminated string.");
                 return;
             }
 

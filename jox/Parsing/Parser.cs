@@ -16,7 +16,9 @@ namespace Jox.Parsing
 
             try
             {
-                return Expression();
+                //  @Refactor: Will return after the first valid expression, 
+                //  ignoring everything afterwards, even if it should be a parsing error.
+                return Expression(); 
             }
             catch (ParseError)
             {
@@ -168,17 +170,15 @@ namespace Jox.Parsing
 
         private static ParseError Error(Token token, string message)
         {
-            Jox.Error(token, message);
+            Jox.ParseError(token, message);
             return new ParseError();
         }
 
         private static void SynchronizeState()
         {
-            _ = EatToken();
-
             while (!AtEof())
             {
-                if (PreviousToken().type == TokenType.SEMICOLON) return; //@Refactor: remove redundant EatToken and PreviousToken
+                if (EatToken().type == TokenType.SEMICOLON) return;
 
                 switch (Peek().type)
                 {
@@ -192,8 +192,6 @@ namespace Jox.Parsing
                     case TokenType.RETURN:
                         return;
                 }
-
-                _ = EatToken();
             }
         }
     }
