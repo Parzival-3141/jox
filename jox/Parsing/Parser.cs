@@ -18,7 +18,7 @@ namespace Jox.Parsing
             {
                 return Expression();
             }
-            catch (ParseError error)
+            catch (ParseError)
             {
                 return null;
             }
@@ -28,11 +28,7 @@ namespace Jox.Parsing
 
         #region Helper Methods
 
-        private static bool Match(TokenType type) => Match(new TokenType[] { type });
-        private static bool Match(TokenType type1, TokenType type2) 
-            => Match(new TokenType[] { type1, type2 });
-
-        private static bool Match(TokenType[] types)
+        private static bool Match(params TokenType[] types)
         {
             foreach(TokenType t in types)
             {
@@ -49,7 +45,7 @@ namespace Jox.Parsing
         private static Token EatToken()
         {
             if (!AtEof()) currentIndex++;
-            return GetPrevious();
+            return PreviousToken();
         }
 
         private static bool CheckPeek(TokenType type)
@@ -63,7 +59,7 @@ namespace Jox.Parsing
             return tokens[currentIndex];
         }
 
-        private static Token GetPrevious()
+        private static Token PreviousToken()
         {
             return tokens[currentIndex - 1];
         }
@@ -83,7 +79,7 @@ namespace Jox.Parsing
             IExpr expr = Comparison();
 
             while(Match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL))
-                expr = new IExpr.Binary(expr, GetPrevious(), Comparison());
+                expr = new IExpr.Binary(expr, PreviousToken(), Comparison());
 
             return expr;
         }
@@ -92,12 +88,8 @@ namespace Jox.Parsing
         {
             IExpr expr = Term();
 
-            while (Match(new TokenType[] 
-            { 
-                TokenType.GREATER, TokenType.GREATER_EQUAL, 
-                TokenType.LESS, TokenType.LESS_EQUAL
-            })) 
-            { expr = new IExpr.Binary(expr, GetPrevious(), Term()); }
+            while (Match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL)) 
+                expr = new IExpr.Binary(expr, PreviousToken(), Term());
                 
 
             return expr;
@@ -108,7 +100,7 @@ namespace Jox.Parsing
             IExpr expr = Factor();
 
             while (Match(TokenType.MINUS, TokenType.PLUS))
-                expr = new IExpr.Binary(expr, GetPrevious(), Factor());
+                expr = new IExpr.Binary(expr, PreviousToken(), Factor());
 
             return expr;
         }
@@ -118,7 +110,7 @@ namespace Jox.Parsing
             IExpr expr = Unary();
 
             while (Match(TokenType.SLASH, TokenType.STAR))
-                expr = new IExpr.Binary(expr, GetPrevious(), Unary());
+                expr = new IExpr.Binary(expr, PreviousToken(), Unary());
 
             return expr;
         }
@@ -126,7 +118,7 @@ namespace Jox.Parsing
         private static IExpr Unary()
         {
             if (Match(TokenType.BANG, TokenType.MINUS))
-                return new IExpr.Unary(GetPrevious(), Unary());
+                return new IExpr.Unary(PreviousToken(), Unary());
             
             return Primary();
         }
@@ -137,7 +129,7 @@ namespace Jox.Parsing
             if (Match(TokenType.FALSE)) return new IExpr.Literal(false);
             if (Match(TokenType.NIL))   return new IExpr.Literal(null);
 
-            if (Match(TokenType.NUMBER, TokenType.STRING)) return new IExpr.Literal(GetPrevious().literal);
+            if (Match(TokenType.NUMBER, TokenType.STRING)) return new IExpr.Literal(PreviousToken().literal);
 
             if (Match(TokenType.LEFT_PAREN))
             {
@@ -145,6 +137,22 @@ namespace Jox.Parsing
                 Consume(TokenType.RIGHT_PAREN, "Expected ')' after expression");
                 return new IExpr.Grouping(expr);
             }
+
+            //  Error Productions for Binary operators missing a left-hand operand
+            //  @Refactor: there's definitely a better way of doing this
+
+            if(Match(
+                TokenType.BANG_EQUAL, 
+                TokenType.EQUAL, TokenType.EQUAL_EQUAL, 
+                TokenType.GREATER, TokenType.GREATER_EQUAL, 
+                TokenType.LESS, TokenType.LESS_EQUAL, 
+                TokenType.MINUS, TokenType.PLUS, 
+                TokenType.SLASH, TokenType.STAR))
+            {
+                Error(PreviousToken(), "Binary Operator is missing a left-hand operand");
+                return Expression();
+            }
+                
 
             throw Error(Peek(), "Expected an Expression.");
         }
@@ -158,7 +166,7 @@ namespace Jox.Parsing
             throw Error(Peek(), message);
         }
 
-        private static Exception Error(Token token, string message)
+        private static ParseError Error(Token token, string message)
         {
             Jox.Error(token, message);
             return new ParseError();
@@ -166,11 +174,11 @@ namespace Jox.Parsing
 
         private static void SynchronizeState()
         {
-            _= EatToken();
+            _ = EatToken();
 
             while (!AtEof())
             {
-                if (GetPrevious().type == TokenType.SEMICOLON) return;
+                if (PreviousToken().type == TokenType.SEMICOLON) return; //@Refactor: remove redundant EatToken and PreviousToken
 
                 switch (Peek().type)
                 {

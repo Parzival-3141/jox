@@ -6,13 +6,16 @@ namespace Jox
     public static class Jox
     {
         private static bool hadError = false;
+        private const int ERROR_INVALID_ARGS = 1;
+        private const int ERROR_INVALID_SOURCE = 2;
+        private const int ERROR_PARSE_FAILURE = 3;
 
         static void Main(string[] args)
         {
             if (args.Length > 1)
             {
                 Console.WriteLine("Usage: jox <source-file>");
-                Environment.Exit(1);
+                Environment.Exit(ERROR_INVALID_ARGS);
             }
             else if (args.Length == 1)
             {
@@ -62,11 +65,11 @@ namespace Jox
             catch
             {
                 Console.WriteLine("Invalid source-file.");
-                Environment.Exit(2);
+                Environment.Exit(ERROR_INVALID_SOURCE);
             }
 
             Run(source);
-            if (hadError) Environment.Exit(3);
+            if (hadError) Environment.Exit(ERROR_PARSE_FAILURE);
         }
 
         //@Refactor: abstract into an 'ErrorReporter' that gets passed around

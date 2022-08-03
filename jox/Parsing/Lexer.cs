@@ -114,13 +114,13 @@ namespace Jox.Parsing
                 case '*': AddToken(TokenType.STAR); break;
 
 
-                case '!': AddToken(Match('=') ? TokenType.BANG_EQUAL : TokenType.BANG); break;
-                case '=': AddToken(Match('=') ? TokenType.EQUAL_EQUAL : TokenType.EQUAL); break;
-                case '<': AddToken(Match('=') ? TokenType.LESS_EQUAL : TokenType.LESS); break;
-                case '>': AddToken(Match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER); break;
+                case '!': AddToken(MatchNext('=') ? TokenType.BANG_EQUAL : TokenType.BANG); break;
+                case '=': AddToken(MatchNext('=') ? TokenType.EQUAL_EQUAL : TokenType.EQUAL); break;
+                case '<': AddToken(MatchNext('=') ? TokenType.LESS_EQUAL : TokenType.LESS); break;
+                case '>': AddToken(MatchNext('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER); break;
 
                 case '/':
-                    if (Match('/'))
+                    if (MatchNext('/'))
                         while (Peek() != '\n' && !AtEof()) EatChar();
                     else
                         AddToken(TokenType.SLASH);
@@ -204,7 +204,7 @@ namespace Jox.Parsing
         static string CurrentLexeme() => src.Substring(lexemeStartIndex, currentIndex - lexemeStartIndex);
         private static bool AtEof() => currentIndex >= src.Length;
 
-        static bool Match(char expected)
+        static bool MatchNext(char expected)
         {
             if (AtEof()) return false;
             if (Peek() != expected) return false;
