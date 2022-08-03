@@ -1,18 +1,37 @@
-﻿## My implementation of the Lox programming language in C#
+﻿# My implementation of the Lox programming language in C#
 
 ## Completed Sections
 
-# Tree-Walk Interpreter
-1. ~~Scanning~~
-2. ~~Representing Code~~
-3. ~~Parsing Expressions~~
-4. Evaluating Expressions
-  1. 
-  2. 
-  3. 
-  4. 
+### Tree-Walk Interpreter
+[x] Scanning
+[x] Representing Code
+[x] Parsing Expressions
+[] Evaluating Expressions
+[] Statements and State
+[] Control Flow
+[] Functions
+[] Resolving and Binding
+[] Classes
+[] Inheritance 
+
+### A Bytecode Virtual Machine
+[] Chunks of Bytecode
+[] A Virtual Machine
+[] Scanning on Demand
+[] Compiling Expressions
+[] Types of Values
+[] Strings
+[] Hash Tables
+[] Global Variables
+[] Local Variables
+[] Jumping Back and Forth
+[] Calls and Functions
+[] Closures
+[] Garbage Collection
+[] Classes and Instances
+[] Methods and Initializers
+[] Superclasses
+[] Optimization
 
 
-
-Built using this guide
-https://craftinginterpreters.com/
+Built using the [Crafting Interpreters](https://craftinginterpreters.com/) book, by [Robert Nystrom](https://twitter.com/intent/user?screen_name=munificentbob).
