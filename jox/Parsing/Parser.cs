@@ -56,7 +56,19 @@ namespace Jox.Parsing
         private static IStmt Statement()
         {
             if (Match(TokenType.PRINT)) return PrintStatement();
+            if (Match(TokenType.LEFT_BRACE)) return new IStmt.Block(BlockStatement());
             return ExpressionStatement();
+        }
+
+        private static List<IStmt> BlockStatement()
+        {
+            var statements = new List<IStmt>();
+
+            while (!CheckPeek(TokenType.RIGHT_BRACE) && !AtEof())
+                statements.Add(Declaration());
+
+            EatExpectedToken(TokenType.RIGHT_BRACE, "Expected '}' after block.");
+            return statements;
         }
 
         private static IStmt ExpressionStatement()

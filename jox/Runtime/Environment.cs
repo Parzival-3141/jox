@@ -8,6 +8,17 @@ namespace Jox.Runtime
     public sealed class Environment
     {
         private Dictionary<string, object> values = new();
+        private Environment enclosing = null;
+
+        public Environment()
+        {
+            enclosing = null;
+        }
+
+        public Environment(Environment enclosing)
+        {
+            this.enclosing = enclosing;
+        }
 
         public void DefineVariable(string name, object value)
         {
@@ -19,6 +30,8 @@ namespace Jox.Runtime
             if (values.TryGetValue(identifier.lexeme, out object value))
                 return value;
 
+            if (enclosing != null) return enclosing.GetVariableValue(identifier);
+
             throw new RuntimeError(identifier, $"Undefined variable '{identifier.lexeme}'.");
         }
 
@@ -27,6 +40,12 @@ namespace Jox.Runtime
             if (values.ContainsKey(identifier.lexeme))
             {
                 values[identifier.lexeme] = value;
+                return;
+            }
+
+            if(enclosing != null)
+            {
+                enclosing.AssignVariableValue(identifier, value);
                 return;
             }
 

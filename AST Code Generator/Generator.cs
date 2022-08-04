@@ -55,6 +55,9 @@ namespace AST_Code_Generator
 // </auto-generated>
 //------------------------------------------------------------------------------";
 
+
+        const string USINGS = "using System;\nusing System.Collections.Generic;";
+
         static HashSet<(string baseName, string[] types)> ASTDefs = new()
         {
             ( "Expr", new string[]
@@ -73,6 +76,7 @@ namespace AST_Code_Generator
                     "Expression : Expr expression",
                     "Print      : Expr expression",
                     "Var        : Token ident, Expr initializer",
+                    "Block      : List<Stmt> statements",
                 }
             )
         };
@@ -101,7 +105,7 @@ namespace AST_Code_Generator
             sw.WriteLine(GEN_WARNING);
             sw.WriteLine();
             
-            sw.WriteLine("using System;");
+            sw.WriteLine(USINGS);
             sw.WriteLine();
             
             sw.WriteLine("namespace Jox.Parsing.AST");

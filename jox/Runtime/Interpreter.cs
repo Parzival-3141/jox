@@ -7,7 +7,7 @@ namespace Jox.Runtime
 {
     public sealed class Interpreter : IExpr.IVisitor<object>, IStmt.IVisitor<Void>
     {
-        private Environment environment = new Environment();
+        private Environment currentEnvironment = new Environment();
 
         public void Interpret(List<IStmt> statements)
         {
@@ -95,7 +95,7 @@ namespace Jox.Runtime
         public object VisitAssignExpr(IExpr.Assign expr)
         {
             object value = Evaluate(expr.value);
-            environment.AssignVariableValue(expr.ident, value);
+            currentEnvironment.AssignVariableValue(expr.ident, value);
             return value;
         }
 
@@ -119,7 +119,7 @@ namespace Jox.Runtime
 
         public object VisitVariableExpr(IExpr.Variable expr)
         {
-            return environment.GetVariableValue(expr.ident);
+            return currentEnvironment.GetVariableValue(expr.ident);
         }
 
         public object VisitGroupingExpr(IExpr.Grouping expr)
@@ -179,8 +179,30 @@ namespace Jox.Runtime
                 value = Evaluate(stmt.initializer);
             }
 
-            environment.DefineVariable(stmt.ident.lexeme, value);
+            currentEnvironment.DefineVariable(stmt.ident.lexeme, value);
             return null;
+        }
+
+        public Void VisitBlockStmt(IStmt.Block stmt)
+        {
+            ExecuteBlock(stmt.statements, new Environment(currentEnvironment));
+            return null;
+        }
+
+        private void ExecuteBlock(List<IStmt> statements, Environment environment)
+        {
+            Environment previous = currentEnvironment;
+            try
+            {
+                currentEnvironment = environment;
+
+                foreach (var stmt in statements)
+                    Execute(stmt);
+            }
+            finally
+            {
+                currentEnvironment = previous;
+            }
         }
 
         private void Execute(IStmt stmt)

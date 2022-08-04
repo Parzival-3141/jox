@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 
 namespace Jox.Parsing.AST
 {
@@ -18,6 +19,7 @@ namespace Jox.Parsing.AST
             T VisitExpressionStmt(Expression stmt);
             T VisitPrintStmt(Print stmt);
             T VisitVarStmt(Var stmt);
+            T VisitBlockStmt(Block stmt);
         }
 
         T Accept<T>(IVisitor<T> visitor);
@@ -66,6 +68,21 @@ namespace Jox.Parsing.AST
             public T Accept<T>(IVisitor<T> visitor)
             {
                 return visitor.VisitVarStmt(this);
+            }
+        }
+
+        public struct Block : IStmt
+        {
+            public List<IStmt> statements;
+
+            public Block(List<IStmt> statements)
+            {
+                this.statements = statements;
+            }
+
+            public T Accept<T>(IVisitor<T> visitor)
+            {
+                return visitor.VisitBlockStmt(this);
             }
         }
 
