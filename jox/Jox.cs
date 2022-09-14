@@ -76,7 +76,7 @@ namespace Jox
 
         private static void RunPrompt()
         {
-            Console.WriteLine("*WIP: Statements and Expressions only!*");
+            Console.WriteLine("*WIP: Statements, Expressions, and Control flow only!*");
             Console.WriteLine("jox Interactive Prompt \n(Type 'exit' to quit)");
             
             while(true)
