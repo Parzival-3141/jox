@@ -55,7 +55,10 @@ namespace Jox.Parsing
 
         private static IStmt Statement()
         {
+            if (Match(TokenType.FOR)) return ForStatement();
+            if (Match(TokenType.IF)) return IfStatement();
             if (Match(TokenType.PRINT)) return PrintStatement();
+            if (Match(TokenType.WHILE)) return WhileStatement();
             if (Match(TokenType.LEFT_BRACE)) return new IStmt.Block(BlockStatement());
             return ExpressionStatement();
         }
@@ -83,6 +86,92 @@ namespace Jox.Parsing
             IExpr value = Expression();
             EatExpectedToken(TokenType.SEMICOLON, "Expected ';' after value.");
             return new IStmt.Print(value);
+        }
+
+        private static IStmt IfStatement()
+        {
+            EatExpectedToken(TokenType.LEFT_PAREN, "Expected '(' after 'if'.");
+            IExpr condition = Expression();
+            EatExpectedToken(TokenType.RIGHT_PAREN, "Expected ')' after if condition.");
+
+            IStmt thenBranch = Statement();
+            IStmt elseBranch = null;
+
+            if(Match(TokenType.ELSE))
+            {
+                elseBranch = Statement();
+            }
+
+            return new IStmt.If(condition, thenBranch, elseBranch);
+        }
+
+        private static IStmt WhileStatement()
+        {
+            EatExpectedToken(TokenType.LEFT_PAREN, "Expected '(' after 'while'.");
+            IExpr condition = Expression();
+            EatExpectedToken(TokenType.RIGHT_PAREN, "Expected ')' after while-loop condition.");
+            IStmt body = Statement();
+
+
+            return new IStmt.While(condition, body);
+        }
+
+        private static IStmt ForStatement()
+        {
+            EatExpectedToken(TokenType.LEFT_PAREN, "Expected '(' after 'for'.");
+
+            IStmt initializer;
+            if (Match(TokenType.SEMICOLON))
+            {
+                initializer = null;
+            }
+            else if (Match(TokenType.VAR))
+            {
+                initializer = VarDeclaration();
+            }
+            else
+            {
+                initializer = ExpressionStatement();
+            }
+
+            IExpr condition = null;
+            if (!CheckPeek(TokenType.SEMICOLON))
+            {
+                condition = Expression();
+            }
+            EatExpectedToken(TokenType.SEMICOLON, "Expected ';' after for-loop condition.");
+
+            IExpr increment = null;
+            if (!CheckPeek(TokenType.RIGHT_PAREN))
+            {
+                increment = Expression();
+            }
+            EatExpectedToken(TokenType.RIGHT_PAREN, "Expected ')' after for-loop clauses.");
+
+            IStmt body = Statement();
+
+            // Desugaring for loop
+            if(increment != null)
+            {
+                // Add increment expression to end of body
+                body = new IStmt.Block(new List<IStmt>() { body, new IStmt.Expression(increment) });
+            }
+
+            if (condition == null)
+            {
+                condition = new IExpr.Literal(true);
+            }
+            
+            // Wrap body in while-loop
+            body = new IStmt.While(condition, body);
+
+            if(initializer != null)
+            {
+                // Insert initializer Stmt outside the while
+                body = new IStmt.Block(new List<IStmt>() { initializer, body });
+            }
+
+            return body;
         }
 
         #region Helper Methods
@@ -137,7 +226,7 @@ namespace Jox.Parsing
         
         private static IExpr Assignment()
         {
-            IExpr expr = Equality();
+            IExpr expr = Or();
 
 
             if (Match(TokenType.EQUAL))
@@ -151,6 +240,34 @@ namespace Jox.Parsing
                 }
 
                 Error(equals, "Invalid assignment target.");
+            }
+
+            return expr;
+        }
+
+        private static IExpr Or()
+        {
+            IExpr expr = And();
+            
+            while(Match(TokenType.OR))
+            {
+                Token @operator = PreviousToken();
+                IExpr right = And();
+                expr = new IExpr.Logical(expr, @operator, right);
+            }
+
+            return expr;
+        }
+
+        private static IExpr And()
+        {
+            IExpr expr = Equality();
+
+            while (Match(TokenType.AND))
+            {
+                Token @operator = PreviousToken();
+                IExpr right = Equality();
+                expr = new IExpr.Logical(expr, @operator, right);
             }
 
             return expr;

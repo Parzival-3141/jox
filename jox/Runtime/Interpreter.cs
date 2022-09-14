@@ -99,6 +99,22 @@ namespace Jox.Runtime
             return value;
         }
 
+        public object VisitLogicalExpr(IExpr.Logical expr)
+        {
+            object left = Evaluate(expr.left);
+
+            if(expr.@operator.type == TokenType.OR)
+            {
+                if (IsTruthy(left)) return left;
+            }
+            else // AND expr
+            {
+                if (!IsTruthy(left)) return left;
+            }
+
+            return Evaluate(expr.right);
+        }
+
         public object VisitUnaryExpr(IExpr.Unary expr)
         {
             object right = Evaluate(expr.right);
@@ -186,6 +202,30 @@ namespace Jox.Runtime
         public Void VisitBlockStmt(IStmt.Block stmt)
         {
             ExecuteBlock(stmt.statements, new Environment(currentEnvironment));
+            return null;
+        }
+
+        public Void VisitIfStmt(IStmt.If stmt)
+        {
+            if (IsTruthy(Evaluate(stmt.condition)))
+            {
+                Execute(stmt.thenBranch);
+            }
+            else if(stmt.elseBranch != null)
+            {
+                Execute(stmt.elseBranch);
+            }
+
+            return null;
+        }
+
+        public Void VisitWhileStmt(IStmt.While stmt)
+        {
+            while (IsTruthy(Evaluate(stmt.condition)))
+            {
+                Execute(stmt.body);
+            }
+
             return null;
         }
 

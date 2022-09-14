@@ -17,7 +17,9 @@ namespace Jox.Parsing.AST
         public interface IVisitor<T>
         {
             T VisitExpressionStmt(Expression stmt);
+            T VisitIfStmt(If stmt);
             T VisitPrintStmt(Print stmt);
+            T VisitWhileStmt(While stmt);
             T VisitVarStmt(Var stmt);
             T VisitBlockStmt(Block stmt);
         }
@@ -39,6 +41,25 @@ namespace Jox.Parsing.AST
             }
         }
 
+        public struct If : IStmt
+        {
+            public IExpr condition;
+            public IStmt thenBranch;
+            public IStmt elseBranch;
+
+            public If(IExpr condition, IStmt thenBranch, IStmt elseBranch)
+            {
+                this.condition = condition;
+                this.thenBranch = thenBranch;
+                this.elseBranch = elseBranch;
+            }
+
+            public T Accept<T>(IVisitor<T> visitor)
+            {
+                return visitor.VisitIfStmt(this);
+            }
+        }
+
         public struct Print : IStmt
         {
             public IExpr expression;
@@ -51,6 +72,23 @@ namespace Jox.Parsing.AST
             public T Accept<T>(IVisitor<T> visitor)
             {
                 return visitor.VisitPrintStmt(this);
+            }
+        }
+
+        public struct While : IStmt
+        {
+            public IExpr condition;
+            public IStmt body;
+
+            public While(IExpr condition, IStmt body)
+            {
+                this.condition = condition;
+                this.body = body;
+            }
+
+            public T Accept<T>(IVisitor<T> visitor)
+            {
+                return visitor.VisitWhileStmt(this);
             }
         }
 

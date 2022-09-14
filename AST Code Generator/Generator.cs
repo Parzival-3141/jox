@@ -60,21 +60,24 @@ namespace AST_Code_Generator
 
         static HashSet<(string baseName, string[] types)> ASTDefs = new()
         {
-            ( "Expr", new string[]
+            ("Expr", new string[]
                 {
                     "Assign   : Token ident, Expr value",
                     "Binary   : Expr left, Token @operator, Expr right",
                     "Grouping : Expr expression",
                     "Literal  : Object value",
+                    "Logical  : Expr left, Token @operator, Expr right",
                     "Unary    : Token @operator, Expr right",
                     "Variable : Token ident",
                 }
             ),
 
-            ( "Stmt", new string[]
+            ("Stmt", new string[]
                 {
                     "Expression : Expr expression",
+                    "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
                     "Print      : Expr expression",
+                    "While      : Expr condition, Stmt body",
                     "Var        : Token ident, Expr initializer",
                     "Block      : List<Stmt> statements",
                 }

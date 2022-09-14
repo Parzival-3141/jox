@@ -65,5 +65,10 @@ namespace Jox.Parsing
         {
             return Parenthesize("assign " + expr.ident.lexeme, expr.value);
         }
+
+        public string VisitLogicalExpr(IExpr.Logical expr)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

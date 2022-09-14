@@ -8,7 +8,7 @@
  - [x] Parsing Expressions
  - [x] Evaluating Expressions
  - [x] Statements and State
- - [ ] Control Flow
+ - [x] Control Flow
  - [ ] Functions
  - [ ] Resolving and Binding
  - [ ] Classes

@@ -113,7 +113,10 @@ namespace Jox
         //@Refactor: could abstract into an 'ErrorReporter' that gets passed around
         public static void ReportError(int line, string context, string where, string message)
         {
-            Console.Error.WriteLine($"[line {line}] {context}Error {where}: {message}");
+            if (where != null)
+                Console.Error.WriteLine($"[line {line}] {context}Error {where}: {message}");
+            else
+                Console.Error.WriteLine($"[line {line}] {context}Error: {message}");
         }
 
         public static void ReportError(Parsing.Token token, string context, string message)
@@ -121,7 +124,7 @@ namespace Jox
             ReportError(token.line, context, $"at '{token.lexeme}'", message);
         }
 
-        public static void ParseError(int line, string message) => ReportError(line, "Parse", "", message);
+        public static void ParseError(int line, string message) => ReportError(line, "Parse", null, message);
         public static void ParseError(Parsing.Token token, string message)
         {
             if (token.type == Parsing.TokenType.EOF)

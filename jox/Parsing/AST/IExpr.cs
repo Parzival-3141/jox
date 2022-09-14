@@ -20,6 +20,7 @@ namespace Jox.Parsing.AST
             T VisitBinaryExpr(Binary expr);
             T VisitGroupingExpr(Grouping expr);
             T VisitLiteralExpr(Literal expr);
+            T VisitLogicalExpr(Logical expr);
             T VisitUnaryExpr(Unary expr);
             T VisitVariableExpr(Variable expr);
         }
@@ -89,6 +90,25 @@ namespace Jox.Parsing.AST
             public T Accept<T>(IVisitor<T> visitor)
             {
                 return visitor.VisitLiteralExpr(this);
+            }
+        }
+
+        public struct Logical : IExpr
+        {
+            public IExpr left;
+            public Token @operator;
+            public IExpr right;
+
+            public Logical(IExpr left, Token @operator, IExpr right)
+            {
+                this.left = left;
+                this.@operator = @operator;
+                this.right = right;
+            }
+
+            public T Accept<T>(IVisitor<T> visitor)
+            {
+                return visitor.VisitLogicalExpr(this);
             }
         }
 
